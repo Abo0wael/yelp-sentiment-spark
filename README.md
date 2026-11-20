@@ -11,7 +11,7 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 | Phase | Notebook | Status |
 |---|---|---|
 | 1. Data Acquisition & Preparation | `01_data_preparation.ipynb` | ✅ Done |
-| 2. EDA & Text Preprocessing | `02_eda_preprocessing.ipynb` | ✅ Done |
+| 2. EDA & Text Preprocessing | `02_eda_preprocessing.ipynb` | 🔄 In progress |
 | 3. Feature Engineering & Modeling | `03_modeling.ipynb` | ⏳ To do |
 | 4. Evaluation, Insights & Reporting | `04_evaluation.ipynb` | ⏳ To do |
 
@@ -42,7 +42,7 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 - `label`
 - `year`
 
-## Phase 2 Results (EDA & Insights)
+## Phase 2 (EDA & Preprocessing) — In Progress
 
 ### Task 1: Star & Sentiment Distribution
 - **Star Counts:**
