@@ -11,7 +11,7 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 | Phase | Notebook | Status |
 |---|---|---|
 | 1. Data Acquisition & Preparation | `01_data_preparation.ipynb` | ✅ Done |
-| 2. EDA & Text Preprocessing | `02_eda_preprocessing.ipynb` | ⏳ To do |
+| 2. EDA & Text Preprocessing | `02_eda_preprocessing.ipynb` | ✅ Done |
 | 3. Feature Engineering & Modeling | `03_modeling.ipynb` | ⏳ To do |
 | 4. Evaluation, Insights & Reporting | `04_evaluation.ipynb` | ⏳ To do |
 
@@ -41,6 +41,35 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 - `date`
 - `label`
 - `year`
+
+## Phase 2 Results (EDA & Insights)
+
+### Task 1: Star & Sentiment Distribution
+- **Star Counts:**
+  - 1-star: 1,069,507 reviews
+  - 2-star: 544,228 reviews
+  - 4-star: 1,452,876 reviews
+  - 5-star: 3,231,568 reviews
+- **Sentiment Breakdown:** Positive (74.4%) vs. Negative (25.6%), reflecting an imbalance ratio of ~2.90 : 1.
+- **Figure:** `figures/01_label_distribution.png`
+
+### Task 2: Review Length Analysis
+Word counts calculated on PySpark across sentiment classes:
+
+| Metric | Negative Reviews (Label 0) | Positive Reviews (Label 1) |
+|---|---|---|
+| Average Word Count | **134.1 words** | **91.8 words** |
+| Median Word Count | **98.0 words** | **66.0 words** |
+| 95th Percentile | **368.0 words** | **251.0 words** |
+
+- **Observation:** Dissatisfied customers write considerably longer and more detailed reviews when detailing complaints, whereas satisfied customers tend to write shorter feedback.
+- **Figure:** `figures/02_review_length.png`
+
+### Task 3: Reviews and Sentiment Over Time (2005 – 2022)
+- Steady growth from 2005 (683 reviews) peaking in 2019 (832,821 reviews).
+- Significant dip in 2020 (517,544 reviews) due to the COVID-19 pandemic, followed by a rebound in 2021 (574,499 reviews).
+- Positive sentiment share declined gradually over the years from ~87–89% in early platform years (2005–2006) to ~70.6% in 2021.
+- **Figure:** `figures/03_reviews_per_year.png`
 
 ## Getting the Data (for team members)
 
