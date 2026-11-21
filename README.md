@@ -8,12 +8,13 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 
 ## Project Phases
 
-| Phase | Notebook | Status |
+| Phase | Deliverable | Status |
 |---|---|---|
-| 1. Data Acquisition & Preparation | `01_data_preparation.ipynb` | ✅ Done |
-| 2. EDA & Text Preprocessing | `02_eda_preprocessing.ipynb` | 🔄 In progress |
-| 3. Feature Engineering & Modeling | `03_modeling.ipynb` | ⏳ To do |
-| 4. Evaluation, Insights & Reporting | `04_evaluation.ipynb` | ⏳ To do |
+| 1. Proposal & Dataset | [`PROPOSAL.md`](PROPOSAL.md), `01_data_preparation.ipynb` | ✅ Done |
+| 2. Data Cleaning & Spark Processing | `02_spark_processing.ipynb` | ✅ Done |
+| 3. EDA & Machine Learning | EDA started in `02_eda_preprocessing.ipynb`; ML notebook to come | ⏳ To do |
+| 4. Interactive Dashboard (Streamlit) | Streamlit app (reads `dashboard_data/`) | ⏳ To do |
+| 5. Report & Presentation | Final report + slides | ⏳ To do |
 
 ## Phase 1 Results
 
@@ -42,7 +43,79 @@ Big Data project using **Apache Spark (PySpark)** and **NLP** to classify millio
 - `label`
 - `year`
 
-## Phase 2 (EDA & Preprocessing) — In Progress
+## Phase 2 Results
+
+All numbers come from `02_spark_processing.ipynb` (Spark 4.0.5 on Colab). Aggregations, joins and SQL ran on the **full** data (6,298,179 reviews); text statistics on the **5% sample** (314,338 reviews, `seed=42`).
+
+### Data quality & missing values
+
+| Check | Reviews | Business |
+|---|---|---|
+| Null values | 0 (all 7 columns) | 103 (all in `categories`) → filled with `"Unknown"` |
+| Empty strings | 0 empty text | 0 categories, 0 city, 0 name |
+| Duplicate IDs | 0 `review_id` | 0 `business_id` |
+| Unexpected stars / label mismatch | 0 / 0 | – |
+| Reviews without a matching business (`left_anti` join) | 0 | – |
+| Date range | 2005-02-16 → 2022-01-19 | – |
+
+### Key aggregation findings
+
+**Yearly trend**: volume peaks in 2019 (832,821 reviews), drops in 2020 (517,544) and partly recovers in 2021 (574,499). The positive share falls steadily from 87.7% (2005) to 70.6% (2021).
+
+| Period | Reviews per year | Positive share |
+|---|---|---|
+| 2015–2019 (pre-COVID) | 741,948 | 74.27% |
+| 2020 (COVID-19) | 517,544 | 72.87% |
+| 2021 (recovery) | 574,499 | 70.59% |
+
+**Review length**: negative reviews are longer (avg / median / p95 words: **134.1 / 98 / 368**) than positive ones (**91.8 / 66 / 251**). Reviews over 500 words (56,681) are only 41.6% positive, and reviews mentioning "refund" (49,284) only 8.8%.
+
+**Top cities by reviews**
+
+| City | Reviews | Positive share |
+|---|---|---|
+| Philadelphia, PA | 853,792 | 77.09% |
+| New Orleans, LA | 567,808 | 81.09% |
+| Tampa, FL | 411,866 | 74.23% |
+| Nashville, TN | 405,129 | 76.61% |
+| Tucson, AZ | 368,433 | 72.20% |
+
+**Most negative categories** (≥ 50,000 reviews; 102 of 1,312 categories qualify)
+
+| Category | Reviews | Positive share |
+|---|---|---|
+| Car Dealers | 63,641 | 47.73% |
+| Real Estate | 53,540 | 49.04% |
+| Fast Food | 207,340 | 52.80% |
+| Auto Parts & Supplies | 59,265 | 53.61% |
+| Hotels | 165,313 | 58.68% |
+
+Most positive: Tours (88.49%), Vegan (86.93%), Food Trucks (86.87%).
+
+### Text preprocessing pipeline (5% sample)
+
+`SQLTransformer` (clean) → `RegexTokenizer` → `StopWordsRemover` (keeps negations / intensifiers) → `NGram(2)`; saved to `models/preprocessing_pipeline`.
+
+| Metric | Value |
+|---|---|
+| Avg tokens per review: before → after stop words | 97.3 → 54.6 (43.9% of tokens removed) |
+| Vocabulary size: before → after stop words | 118,778 → 118,665 |
+| Handmade checks (`not` kept, URLs removed, `not good` bigram) | passed |
+
+### Spark features used
+- **DataFrames & Parquet I/O**: schemas, reading/writing Parquet on Drive
+- **Missing-value handling**: one-pass null counts, empty-string checks, `when()` fill with `"Unknown"`
+- **Transformations**: `withColumn`, `select` / `drop`, `filter`, `between`, `when`
+- **Aggregations**: `groupBy` / `agg`, `countDistinct`, `percentile_approx`
+- **Joins**: `left_anti` (key check), `inner` with `broadcast`, `left_semi`
+- **Arrays**: `split` + `explode` for categories
+- **Spark SQL**: temp views, `JOIN`, `HAVING`, `LATERAL VIEW`, CTEs; **4 / 4 queries match the DataFrame API exactly**
+- **Window functions**: `RANK() OVER (PARTITION BY state …)`
+- **Spark ML Pipeline**: `SQLTransformer`, `RegexTokenizer`, `StopWordsRemover`, `NGram`
+- **Caching / sampling**: `cache()` / `unpersist()`, `sample(0.05, seed=42)`
+- **Dashboard export**: `yearly_stats` (18 rows), `city_stats` (50), `category_stats` (1,312), `length_stats` (2) in `dashboard_data/`
+
+## Phase 3 EDA: early results (`02_eda_preprocessing.ipynb`) — In Progress
 
 ### Task 1: Star & Sentiment Distribution
 - **Star Counts:**
@@ -77,8 +150,15 @@ The cleaned data is **not** stored in this repo (it is several GB). It lives on 
 
 ```
 yelp_project/
-├── reviews_clean.parquet   # review_id, business_id, stars, text, date, label, year
-└── business.parquet        # business_id, name, city, state, categories
+├── reviews_clean.parquet          # review_id, business_id, stars, text, date, label, year   (Phase 1)
+├── business.parquet               # business_id, name, city, state, categories             (Phase 1)
+├── models/
+│   └── preprocessing_pipeline/    # fitted Spark ML text pipeline                           (Phase 2)
+└── dashboard_data/                # small summary tables for Streamlit                      (Phase 2)
+    ├── yearly_stats/
+    ├── city_stats/
+    ├── category_stats/
+    └── length_stats/
 ```
 
 1. Open the shared `yelp_project` folder link.
@@ -105,6 +185,20 @@ sample = df.sample(fraction=0.05, seed=42)
 ```
 
 You do **not** need to re-run Phase 1 unless you want to rebuild the data from scratch.
+
+## How to run
+
+1. Open the notebook in **Google Colab** (File → Open notebook → GitHub, or upload it).
+2. Choose **Runtime → Change runtime type → CPU** with **High-RAM** (no GPU needed; Spark uses the CPU).
+3. Make sure the shared `yelp_project` folder is in your Drive (see *Getting the Data*).
+4. Run the notebooks **in order**, each one top to bottom (**Runtime → Run all**):
+
+| Order | Notebook | Reads | Writes |
+|---|---|---|---|
+| 1 | `01_data_preparation.ipynb` | Kaggle (needs your Kaggle API token) | `reviews_clean.parquet`, `business.parquet` |
+| 2 | `02_spark_processing.ipynb` | the two Parquet files | `models/preprocessing_pipeline/`, `dashboard_data/` |
+
+Step 1 only has to be run once for the whole team. If the Parquet files already exist on Drive, start directly with step 2.
 
 ## Rules
 - Never commit `kaggle.json` or any data files.
